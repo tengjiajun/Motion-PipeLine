@@ -1,0 +1,7 @@
+﻿{
+  "repo_root": "F:/LLM-pepper/motion_pipeline",
+  "alphapose_root": "F:/LLM-pepper/AlphaPose",
+  "fromw1_root": "F:/LLM-pepper/FRoM-W1",
+  "robojudo_root": "F:/LLM-pepper/RoboJuDo",
+  "exbody_root": null
+}

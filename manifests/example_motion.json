@@ -1,0 +1,30 @@
+﻿{
+  "motion_id": "example_001",
+  "source": {
+    "video": "data/videos/example_001.mp4",
+    "alphapose_raw": null,
+    "smpl_raw": "data/smpl_raw/example_001.npy"
+  },
+  "canonical": {
+    "path": "data/canonical/example_001.npz",
+    "fps": 30,
+    "status": "pending"
+  },
+  "backends": {
+    "fromw1": {
+      "input": "data/fromw1_inputs/example_001",
+      "result": "data/results/fromw1/example_001",
+      "status": "pending"
+    },
+    "exbody": {
+      "input": "data/exbody_inputs/example_001",
+      "result": "data/results/exbody/example_001",
+      "status": "pending"
+    }
+  },
+  "metrics": {
+    "path": "data/metrics/example_001.json",
+    "status": "pending"
+  },
+  "notes": []
+}

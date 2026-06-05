@@ -1,0 +1,33 @@
+{
+  "operation": "apply_llm_edit_plan",
+  "input_npz": "F:\\LLM-pepper\\motion_pipeline\\data\\canonical\\canonical_edited\\point_left_001_canonical_motion_v2.npz",
+  "edit_plan": "data\\llm\\llm_edits\\qwen_max_single_motion\\point_left_001\\20260604_155047_qwen-max_edit_plan_decoded.json",
+  "original_num_frames": 132,
+  "new_num_frames": 172,
+  "time_stretch": 1.3,
+  "applied_ops": [
+    {
+      "type": "smooth",
+      "target": "whole_body",
+      "strength": 0.5,
+      "window": 7
+    },
+    {
+      "type": "reduce_speed",
+      "target": "upper_body",
+      "strength": 0.4,
+      "time_stretch": 1.3
+    },
+    {
+      "type": "reduce_amplitude",
+      "target": "arms",
+      "strength": 0.3,
+      "note": "conservative damping toward first-frame pose"
+    },
+    {
+      "type": "stabilize_lower_body",
+      "target": "lower_body",
+      "strength": 0.2
+    }
+  ]
+}

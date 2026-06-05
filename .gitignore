@@ -1,0 +1,30 @@
+# Generated/binary outputs
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.npz
+*.npy
+*.pkl
+*.mp4
+*.avi
+*.mov
+
+# Generated data
+/data/*
+!/data/.gitkeep
+!/data/canonical/
+!/data/canonical/**
+/logs/*
+!/logs/.gitkeep
+
+# Python/cache
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/

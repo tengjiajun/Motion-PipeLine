@@ -1,0 +1,487 @@
+{
+  "schema": "canonical_eval_rules_h1_v1",
+  "notes": [
+    "These are conservative evaluation rules for canonical/reference quality, not low-level robot safety limits.",
+    "Replace approximate_h1_joint_limits_rad with limits parsed from the actual H1 URDF or simulator config when available.",
+    "Canonical evaluation should use these rules to suggest reference edits; backend conversion or execution failures should be handled in their own layers."
+  ],
+  "units": {
+    "angle": "rad",
+    "distance": "m",
+    "time": "s"
+  },
+  "h1_model": {
+    "name": "Unitree H1 approximate evaluation model",
+    "target": "H1 humanoid in simulation",
+    "assumptions": [
+      "Upper-body gestures are the primary semantic target.",
+      "Lower body should usually remain stable unless the action explicitly requires stepping.",
+      "The canonical layer may not know exact actuator torque limits, so it checks kinematic feasibility and motion smoothness only."
+    ]
+  },
+  "approximate_h1_joint_limits_rad": {
+    "left_hip_yaw": {
+      "min": -0.7,
+      "max": 0.7,
+      "soft_min": -0.5,
+      "soft_max": 0.5
+    },
+    "right_hip_yaw": {
+      "min": -0.7,
+      "max": 0.7,
+      "soft_min": -0.5,
+      "soft_max": 0.5
+    },
+    "left_hip_roll": {
+      "min": -0.45,
+      "max": 0.45,
+      "soft_min": -0.3,
+      "soft_max": 0.3
+    },
+    "right_hip_roll": {
+      "min": -0.45,
+      "max": 0.45,
+      "soft_min": -0.3,
+      "soft_max": 0.3
+    },
+    "left_hip_pitch": {
+      "min": -1.2,
+      "max": 1.2,
+      "soft_min": -0.9,
+      "soft_max": 0.9
+    },
+    "right_hip_pitch": {
+      "min": -1.2,
+      "max": 1.2,
+      "soft_min": -0.9,
+      "soft_max": 0.9
+    },
+    "left_knee": {
+      "min": -0.1,
+      "max": 2.0,
+      "soft_min": 0.0,
+      "soft_max": 1.5
+    },
+    "right_knee": {
+      "min": -0.1,
+      "max": 2.0,
+      "soft_min": 0.0,
+      "soft_max": 1.5
+    },
+    "left_ankle_pitch": {
+      "min": -0.8,
+      "max": 0.8,
+      "soft_min": -0.45,
+      "soft_max": 0.45
+    },
+    "right_ankle_pitch": {
+      "min": -0.8,
+      "max": 0.8,
+      "soft_min": -0.45,
+      "soft_max": 0.45
+    },
+    "left_ankle_roll": {
+      "min": -0.45,
+      "max": 0.45,
+      "soft_min": -0.25,
+      "soft_max": 0.25
+    },
+    "right_ankle_roll": {
+      "min": -0.45,
+      "max": 0.45,
+      "soft_min": -0.25,
+      "soft_max": 0.25
+    },
+    "torso_yaw": {
+      "min": -0.8,
+      "max": 0.8,
+      "soft_min": -0.45,
+      "soft_max": 0.45
+    },
+    "torso_pitch": {
+      "min": -0.45,
+      "max": 0.45,
+      "soft_min": -0.25,
+      "soft_max": 0.25
+    },
+    "torso_roll": {
+      "min": -0.35,
+      "max": 0.35,
+      "soft_min": -0.2,
+      "soft_max": 0.2
+    },
+    "left_shoulder_pitch": {
+      "min": -2.5,
+      "max": 2.5,
+      "soft_min": -2.0,
+      "soft_max": 2.0
+    },
+    "right_shoulder_pitch": {
+      "min": -2.5,
+      "max": 2.5,
+      "soft_min": -2.0,
+      "soft_max": 2.0
+    },
+    "left_shoulder_roll": {
+      "min": -1.8,
+      "max": 1.8,
+      "soft_min": -1.3,
+      "soft_max": 1.3
+    },
+    "right_shoulder_roll": {
+      "min": -1.8,
+      "max": 1.8,
+      "soft_min": -1.3,
+      "soft_max": 1.3
+    },
+    "left_shoulder_yaw": {
+      "min": -2.0,
+      "max": 2.0,
+      "soft_min": -1.5,
+      "soft_max": 1.5
+    },
+    "right_shoulder_yaw": {
+      "min": -2.0,
+      "max": 2.0,
+      "soft_min": -1.5,
+      "soft_max": 1.5
+    },
+    "left_elbow": {
+      "min": -0.1,
+      "max": 2.3,
+      "soft_min": 0.0,
+      "soft_max": 1.9
+    },
+    "right_elbow": {
+      "min": -0.1,
+      "max": 2.3,
+      "soft_min": 0.0,
+      "soft_max": 1.9
+    }
+  },
+  "simple_kinematic_constraints": {
+    "smoothness": {
+      "max_keypoint_speed_mps": 3.0,
+      "warn_keypoint_speed_mps": 2.0,
+      "max_keypoint_accel_mps2": 35.0,
+      "warn_keypoint_accel_mps2": 20.0,
+      "max_keypoint_jerk_mps3": 500.0,
+      "warn_keypoint_jerk_mps3": 250.0
+    },
+    "root_motion": {
+      "max_root_lateral_drift_m": 0.35,
+      "warn_root_lateral_drift_m": 0.20,
+      "max_root_forward_backward_drift_m": 0.45,
+      "warn_root_forward_backward_drift_m": 0.25,
+      "max_root_height_range_m": 0.25,
+      "warn_root_height_range_m": 0.15,
+      "max_root_speed_mps": 1.0,
+      "warn_root_speed_mps": 0.6
+    },
+    "lower_body_stability": {
+      "max_foot_height_change_m": 0.08,
+      "warn_foot_height_change_m": 0.04,
+      "max_ankle_xy_motion_m": 0.18,
+      "warn_ankle_xy_motion_m": 0.10,
+      "max_knee_xy_motion_m": 0.22,
+      "warn_knee_xy_motion_m": 0.14,
+      "lower_body_motion_ratio_warn": 0.35,
+      "lower_body_motion_ratio_fail": 0.55
+    },
+    "upper_body_reach": {
+      "max_hand_distance_from_pelvis_m": 0.95,
+      "warn_hand_distance_from_pelvis_m": 0.75,
+      "max_hand_height_above_head_m": 0.35,
+      "warn_hand_height_above_head_m": 0.20,
+      "min_clear_gesture_hand_path_m": 0.08
+    },
+    "symmetry_and_leakage": {
+      "max_non_active_hand_path_m": 0.25,
+      "warn_non_active_hand_path_m": 0.15,
+      "max_unintended_torso_path_m": 0.18,
+      "warn_unintended_torso_path_m": 0.10
+    },
+    "balance_proxy": {
+      "max_torso_lateral_offset_from_pelvis_m": 0.20,
+      "warn_torso_lateral_offset_from_pelvis_m": 0.12,
+      "max_head_lateral_offset_from_pelvis_m": 0.30,
+      "warn_head_lateral_offset_from_pelvis_m": 0.18,
+      "max_pelvis_to_ankle_center_xy_offset_m": 0.18,
+      "warn_pelvis_to_ankle_center_xy_offset_m": 0.10
+    }
+  },
+  "semantic_action_rules": {
+    "beckon": {
+      "active_hand": "right",
+      "active_joints": [
+        "right_elbow",
+        "right_wrist",
+        "right_hand"
+      ],
+      "required_features": {
+        "right_hand_above_shoulder_ratio_min": 0.45,
+        "right_wrist_lateral_amplitude_min_m": 0.08,
+        "right_wrist_lateral_amplitude_max_m": 0.35,
+        "right_wrist_repetition_count_min": 1,
+        "right_wrist_repetition_count_max": 5,
+        "right_elbow_flexion_motion_min_m": 0.04
+      },
+      "avoid": {
+        "lower_body_motion_ratio_max": 0.35,
+        "root_drift_max_m": 0.25,
+        "left_hand_path_max_m": 0.25
+      },
+      "suggested_edit_if_failed": [
+        "increase_amplitude target=right_wrist axis=lateral",
+        "raise_limb target=right_hand",
+        "smooth_segment target=right_wrist",
+        "stabilize_lower_body"
+      ]
+    },
+    "wave_right": {
+      "active_hand": "right",
+      "active_joints": [
+        "right_shoulder",
+        "right_elbow",
+        "right_wrist",
+        "right_hand"
+      ],
+      "required_features": {
+        "right_hand_above_shoulder_ratio_min": 0.55,
+        "right_wrist_lateral_amplitude_min_m": 0.10,
+        "right_wrist_lateral_amplitude_max_m": 0.45,
+        "wave_repetition_count_min": 1,
+        "wave_repetition_count_max": 6
+      },
+      "avoid": {
+        "root_drift_max_m": 0.25,
+        "lower_body_motion_ratio_max": 0.35,
+        "left_hand_path_max_m": 0.25
+      },
+      "suggested_edit_if_failed": [
+        "raise_limb target=right_hand",
+        "increase_amplitude target=right_wrist axis=lateral",
+        "slow_down_segment target=right_arm",
+        "stabilize_lower_body"
+      ]
+    },
+    "wave_both": {
+      "active_hand": "both",
+      "active_joints": [
+        "left_shoulder",
+        "left_elbow",
+        "left_wrist",
+        "right_shoulder",
+        "right_elbow",
+        "right_wrist"
+      ],
+      "required_features": {
+        "left_hand_above_shoulder_ratio_min": 0.45,
+        "right_hand_above_shoulder_ratio_min": 0.45,
+        "left_right_amplitude_ratio_min": 0.55,
+        "left_right_amplitude_ratio_max": 1.8,
+        "wrist_lateral_amplitude_min_m": 0.08,
+        "wrist_lateral_amplitude_max_m": 0.45
+      },
+      "avoid": {
+        "root_drift_max_m": 0.30,
+        "lower_body_motion_ratio_max": 0.40
+      },
+      "suggested_edit_if_failed": [
+        "balance_amplitude target=left_right_wrists",
+        "raise_limb target=both_hands",
+        "slow_down_segment target=both_arms",
+        "stabilize_lower_body"
+      ]
+    },
+    "raise_hand": {
+      "active_hand": "right",
+      "active_joints": [
+        "right_shoulder",
+        "right_elbow",
+        "right_wrist",
+        "right_hand"
+      ],
+      "required_features": {
+        "right_hand_above_shoulder_ratio_min": 0.60,
+        "right_hand_peak_above_shoulder_min_m": 0.12,
+        "right_hand_hold_duration_min_s": 0.25,
+        "right_wrist_path_min_m": 0.10
+      },
+      "avoid": {
+        "right_wrist_lateral_amplitude_max_m": 0.20,
+        "root_drift_max_m": 0.20,
+        "lower_body_motion_ratio_max": 0.30
+      },
+      "suggested_edit_if_failed": [
+        "raise_limb target=right_hand",
+        "hold_pose target=right_hand",
+        "reduce_amplitude target=right_wrist axis=lateral",
+        "stabilize_lower_body"
+      ]
+    },
+    "point_left": {
+      "active_hand": "left",
+      "active_joints": [
+        "left_shoulder",
+        "left_elbow",
+        "left_wrist",
+        "left_hand"
+      ],
+      "required_features": {
+        "left_arm_extension_min_m": 0.28,
+        "left_hand_lateral_displacement_min_m": 0.18,
+        "left_elbow_straightness_min": 0.55,
+        "point_hold_duration_min_s": 0.20
+      },
+      "avoid": {
+        "right_hand_path_max_m": 0.25,
+        "root_drift_max_m": 0.25,
+        "lower_body_motion_ratio_max": 0.35
+      },
+      "suggested_edit_if_failed": [
+        "extend_limb target=left_arm",
+        "hold_pose target=left_hand",
+        "reduce_motion target=right_hand",
+        "stabilize_lower_body"
+      ]
+    },
+    "point_right": {
+      "active_hand": "right",
+      "active_joints": [
+        "right_shoulder",
+        "right_elbow",
+        "right_wrist",
+        "right_hand"
+      ],
+      "required_features": {
+        "right_arm_extension_min_m": 0.28,
+        "right_hand_lateral_displacement_min_m": 0.18,
+        "right_elbow_straightness_min": 0.55,
+        "point_hold_duration_min_s": 0.20
+      },
+      "avoid": {
+        "left_hand_path_max_m": 0.25,
+        "root_drift_max_m": 0.25,
+        "lower_body_motion_ratio_max": 0.35
+      },
+      "suggested_edit_if_failed": [
+        "extend_limb target=right_arm",
+        "hold_pose target=right_hand",
+        "reduce_motion target=left_hand",
+        "stabilize_lower_body"
+      ]
+    },
+    "bow": {
+      "active_hand": "both",
+      "active_joints": [
+        "head",
+        "neck",
+        "spine3",
+        "pelvis"
+      ],
+      "required_features": {
+        "head_height_drop_min_m": 0.08,
+        "torso_forward_displacement_min_m": 0.05,
+        "bow_hold_duration_min_s": 0.20,
+        "left_right_arm_symmetry_min": 0.50
+      },
+      "avoid": {
+        "root_drift_max_m": 0.20,
+        "foot_motion_max_m": 0.08,
+        "torso_lateral_offset_max_m": 0.15
+      },
+      "suggested_edit_if_failed": [
+        "increase_torso_bow",
+        "hold_pose target=bow_peak",
+        "reduce_lateral_motion target=torso",
+        "stabilize_lower_body"
+      ]
+    },
+    "nod_gesture": {
+      "active_hand": "none",
+      "active_joints": [
+        "head",
+        "neck"
+      ],
+      "required_features": {
+        "head_vertical_motion_min_m": 0.02,
+        "head_vertical_motion_max_m": 0.12,
+        "nod_repetition_count_min": 1,
+        "nod_repetition_count_max": 4
+      },
+      "avoid": {
+        "hand_path_max_m": 0.15,
+        "root_drift_max_m": 0.12,
+        "lower_body_motion_ratio_max": 0.25
+      },
+      "suggested_edit_if_failed": [
+        "increase_amplitude target=head axis=vertical",
+        "reduce_motion target=arms",
+        "stabilize_lower_body"
+      ]
+    },
+    "turn_point": {
+      "active_hand": "right",
+      "active_joints": [
+        "spine3",
+        "right_shoulder",
+        "right_elbow",
+        "right_wrist"
+      ],
+      "required_features": {
+        "torso_yaw_proxy_min_m": 0.04,
+        "right_arm_extension_min_m": 0.22,
+        "right_hand_lateral_displacement_min_m": 0.15,
+        "point_hold_duration_min_s": 0.15
+      },
+      "avoid": {
+        "root_drift_max_m": 0.30,
+        "lower_body_motion_ratio_max": 0.45,
+        "excessive_torso_lateral_offset_max_m": 0.18
+      },
+      "suggested_edit_if_failed": [
+        "increase_torso_rotation",
+        "extend_limb target=right_arm",
+        "slow_down_segment target=turn_and_point",
+        "stabilize_lower_body"
+      ]
+    },
+    "welcome": {
+      "active_hand": "both",
+      "active_joints": [
+        "left_shoulder",
+        "left_elbow",
+        "left_wrist",
+        "right_shoulder",
+        "right_elbow",
+        "right_wrist"
+      ],
+      "required_features": {
+        "both_hands_opening_amplitude_min_m": 0.18,
+        "both_hands_forward_or_lateral_motion_min_m": 0.12,
+        "left_right_symmetry_min": 0.45,
+        "hold_duration_min_s": 0.20
+      },
+      "avoid": {
+        "root_drift_max_m": 0.30,
+        "lower_body_motion_ratio_max": 0.40,
+        "hand_height_above_head_max_m": 0.35
+      },
+      "suggested_edit_if_failed": [
+        "increase_amplitude target=both_hands axis=opening",
+        "balance_amplitude target=left_right_hands",
+        "hold_pose target=welcome_peak",
+        "stabilize_lower_body"
+      ]
+    }
+  },
+  "recommended_actions": {
+    "usable": "Reference is smooth, feasible, and semantically clear enough for backend conversion.",
+    "smooth_reference": "Temporal spikes or high jerk are present; smooth the affected segment before backend conversion.",
+    "increase_semantic_amplitude": "The action is too weak or ambiguous; increase the active limb or torso amplitude.",
+    "reduce_amplitude": "The action is likely too large for H1 or balance; reduce active limb/root/torso amplitude.",
+    "stabilize_lower_body": "Lower-body or root motion is excessive for an upper-body gesture.",
+    "retarget_check_required": "The canonical reference is borderline; run backend conversion checks before execution evaluation."
+  }
+}
