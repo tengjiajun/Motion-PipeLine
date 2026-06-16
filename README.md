@@ -7,9 +7,10 @@ This repository is the orchestration layer for the motion workflow. AlphaPose, F
 ```text
 video
   -> AlphaPose / SMPL raw npy
-  -> canonical_motion.npz
+  -> human canonical motion
   -> FRoM-W1 input
   -> ExBody input
+  -> h1_reference_motion.npz
   -> backend results + metrics
 ```
 
@@ -25,6 +26,13 @@ tools/           Small shared utilities.
 data/            Local generated data. Large contents are gitignored.
 logs/            Runtime logs. Gitignored.
 ```
+
+## Motion Layers
+
+`canonical_motion.npz` is the cleaned human-motion layer. The robot-level reference layer is
+`h1_reference_motion.npz`, which stores H1 root pose and 19-DoF joint references before any
+RoboJuDo/Isaac/MuJoCo execution. LLM edits should target the H1 reference layer when the goal is
+to refine robot behavior rather than repair AlphaPose/SMPL estimates.
 
 ## First rule
 

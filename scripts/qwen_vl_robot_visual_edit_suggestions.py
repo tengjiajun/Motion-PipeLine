@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Ask Qwen-VL for a qualitative visual comparison of source/reference/robot motion."""
+"""Ask Qwen-VL for a qualitative comparison of source/H1-reference/execution motion."""
 
 from __future__ import annotations
 
@@ -19,42 +19,32 @@ from PIL import Image, ImageSequence
 
 DEFAULT_API_KEY_FILE = Path(r"F:\LLM-pepper\qw_LLM.txt")
 DEFAULT_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-DEFAULT_OUTPUT_DIR = Path("data/llm/llm_visual_edit/qwen_vl")
+DEFAULT_OUTPUT_DIR = Path("data/llm/llm_visual_edit/qwen_vl_h1_reference")
 
 
-SYSTEM_PROMPT = """你是人形机器人动作模仿的视觉评审。
-
+SYSTEM_PROMPT = """你是人形机器人 H1 动作模仿的视觉评审。
 你会看到三组按时间顺序排列的图片：
 第一组是原始视频中的人类动作；
-第二组是生成的参考动作 GIF；
-第三组是机器人执行动作 GIF。
+第二组是 H1 reference GIF，也就是机器人未进入环境执行前的参考动作；
+第三组是机器人在环境/策略中实际执行后的 GIF。
 
 请只根据图片本身判断动作，不要使用文件名，不要输出 JSON，不要输出字段表，不要输出分数、参数、阈值或控制指令。
-
-评价时请忽略灰色/黑色、背景、地面、光照、渲染方式、机器人外形和人体外形的差异，只比较动作本身。
-
-判断方向时，以画面中的方向为准，不要纠结人体或机器人自己的左手/右手。如果原视频中手臂指向画面右侧，参考动作或机器人动作也大致指向画面右侧，就认为方向基本一致。轻微向上抬、肘部弯曲或伸展不足可以作为动作不足描述，但不要因此直接说方向完全相反。
+评价时请忽略灰色/黑色、背景、地面、光照、渲染方式、机器人外形和人体外形差异，只比较动作本身。
+判断方向时，以画面中的方向为准，不要纠结人体或机器人自己的左手/右手。如果原视频中手臂指向画面右侧，H1 reference 或执行动作也大致指向画面右侧，就认为方向基本一致。轻微向上抬、肘部弯曲或伸展不足可以作为动作不足描述，但不要因此直接说方向完全相反。
 
 请用自然语言分段回答：
-
 原视频动作：
 描述人类动作。
-
-参考动作：
-描述参考动作 GIF。
-
-参考动作不足：
-只和原视频比较，说参考动作哪里不像。
-
+H1参考动作：
+描述 H1 reference GIF。
+H1参考动作不足：
+只和原视频比较，说 H1 reference 哪里不像。
 机器人执行：
 描述机器人执行 GIF。
-
 机器人相对原视频的不足：
 先和原视频比较，说机器人哪里不像。
-
-机器人相对参考动作的不足：
-再和参考动作 GIF 比较，说机器人执行哪里没有跟上参考动作。
-"""
+机器人相对H1参考动作的不足：
+再和 H1 reference GIF 比较，说机器人执行哪里没有跟上参考动作。"""
 
 
 def read_api_key(path: Path) -> str:
@@ -63,9 +53,7 @@ def read_api_key(path: Path) -> str:
     if os.environ.get("QWEN_API_KEY"):
         return os.environ["QWEN_API_KEY"].strip()
     if not path.exists():
-        raise FileNotFoundError(
-            f"API key file not found: {path}. Set DASHSCOPE_API_KEY instead."
-        )
+        raise FileNotFoundError(f"API key file not found: {path}. Set DASHSCOPE_API_KEY instead.")
     key = path.read_text(encoding="utf-8").strip()
     if not key:
         raise ValueError(f"API key file is empty: {path}")
@@ -112,10 +100,7 @@ def sample_gif_frames(
     if not frames:
         raise RuntimeError(f"No frames found in GIF: {gif_path}")
 
-    indices = [
-        round((i + 1) * (len(frames) - 1) / (num_frames + 1))
-        for i in range(num_frames)
-    ]
+    indices = [round((i + 1) * (len(frames) - 1) / (num_frames + 1)) for i in range(num_frames)]
     output_paths: list[Path] = []
     for i, frame_index in enumerate(indices, start=1):
         out_path = output_dir / f"frame_{i:02d}_idx_{frame_index}.jpg"
@@ -159,18 +144,16 @@ def call_qwen_vl(
         user_content.append(
             {
                 "type": "text",
-                "text": "下面第二组图片是生成的参考动作 GIF，按时间顺序排列。",
+                "text": "下面第二组图片是 H1 reference GIF，即机器人未执行前的参考动作，按时间顺序排列。",
             }
         )
         for path in reference_frames:
-            user_content.append(
-                {"type": "image_url", "image_url": {"url": image_to_data_url(path)}}
-            )
+            user_content.append({"type": "image_url", "image_url": {"url": image_to_data_url(path)}})
 
     user_content.append(
         {
             "type": "text",
-            "text": "下面第三组图片是机器人执行动作 GIF，按时间顺序排列。",
+            "text": "下面第三组图片是机器人在环境/策略中实际执行后的 GIF，按时间顺序排列。",
         }
     )
     for path in robot_frames:
@@ -208,7 +191,7 @@ def call_qwen_vl(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Compare source/reference/robot frames, then ask Qwen-VL for qualitative shortcomings."
+        description="Compare source/H1-reference/execution frames, then ask Qwen-VL for qualitative shortcomings."
     )
     parser.add_argument("--source-frames-dir", type=Path, required=True)
     parser.add_argument("--reference-frames-dir", type=Path, default=None)
@@ -247,7 +230,7 @@ def main() -> int:
     elif args.reference_gif is not None:
         reference_frames = sample_gif_frames(
             args.reference_gif,
-            output_dir / "reference_frames",
+            output_dir / "h1_reference_frames",
             num_frames=args.num_frames,
             max_width=args.max_width,
             jpeg_quality=args.jpeg_quality,
@@ -258,7 +241,7 @@ def main() -> int:
     else:
         robot_frames = sample_gif_frames(
             args.robot_gif,
-            output_dir / "robot_frames",
+            output_dir / "robot_execution_frames",
             num_frames=args.num_frames,
             max_width=args.max_width,
             jpeg_quality=args.jpeg_quality,
@@ -273,10 +256,10 @@ def main() -> int:
         "model": args.model,
         "motion_id": args.motion_id,
         "source_frames": [str(path) for path in source_frames],
-        "reference_gif": str(args.reference_gif) if args.reference_gif else None,
-        "reference_frames": [str(path) for path in reference_frames] if reference_frames else None,
-        "robot_gif": str(args.robot_gif) if args.robot_gif else None,
-        "robot_frames": [str(path) for path in robot_frames],
+        "h1_reference_gif": str(args.reference_gif) if args.reference_gif else None,
+        "h1_reference_frames": [str(path) for path in reference_frames] if reference_frames else None,
+        "robot_execution_gif": str(args.robot_gif) if args.robot_gif else None,
+        "robot_execution_frames": [str(path) for path in robot_frames],
     }
     metadata_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -298,9 +281,7 @@ def main() -> int:
         timeout=args.timeout,
     )
 
-    raw_response_path.write_text(
-        json.dumps(response, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    raw_response_path.write_text(json.dumps(response, ensure_ascii=False, indent=2), encoding="utf-8")
 
     try:
         content = response["choices"][0]["message"]["content"]
@@ -308,7 +289,6 @@ def main() -> int:
         raise RuntimeError(f"Unexpected Qwen-VL response shape: {response}") from exc
 
     raw_text_path.write_text(content, encoding="utf-8")
-
     suggestions_path.write_text(content, encoding="utf-8")
 
     json_path = None
@@ -316,9 +296,7 @@ def main() -> int:
         json_path = output_dir / f"{args.model}_visual_qualitative_report.json"
         try:
             suggestions = extract_json_object(content)
-            json_path.write_text(
-                json.dumps(suggestions, ensure_ascii=False, indent=2), encoding="utf-8"
-            )
+            json_path.write_text(json.dumps(suggestions, ensure_ascii=False, indent=2), encoding="utf-8")
         except Exception:
             if not args.allow_non_json:
                 raise

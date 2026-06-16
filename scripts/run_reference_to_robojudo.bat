@@ -2,8 +2,9 @@
 setlocal EnableExtensions EnableDelayedExpansion
 
 REM One-click pipeline:
-REM canonical_motion.npz -> FRoM-W1 623 npy -> FRoM-W1 H1 pkl
-REM -> reference pkl GIF -> RoboJuDo rollout data + execution GIF.
+REM human canonical npz -> FRoM-W1 623 npy -> FRoM-W1 H1 pkl
+REM -> h1_reference_motion.npz -> reference pkl GIF
+REM -> RoboJuDo rollout data + execution GIF.
 
 set "SCRIPT_DIR=%~dp0"
 for %%I in ("%SCRIPT_DIR%..") do set "PIPELINE_ROOT=%%~fI"
@@ -44,6 +45,7 @@ if "%H1_XML%"=="" set "H1_XML=%FROMW1_RETARGET_ROOT%\assets\robot\h1\h1.xml"
 
 set "FROMW1_NPY_DIR=%PIPELINE_ROOT%\data\fromw1_inputs\fromw1_inputs_llm_runs\%RUN_NAME%"
 set "FROMW1_PKL_DIR=%PIPELINE_ROOT%\data\fromw1_pkl\fromw1_pkl_llm_runs\%RUN_NAME%"
+set "H1_REFERENCE_DIR=%PIPELINE_ROOT%\data\h1_reference\fromw1_runs\%RUN_NAME%"
 set "PKL_GIF_DIR=%PIPELINE_ROOT%\data\gifs\pkl_gifs\%RUN_NAME%"
 set "ROBOJUDO_OUT_DIR=%PIPELINE_ROOT%\data\results\robojudo\%RUN_NAME%"
 
@@ -55,7 +57,7 @@ echo.
 
 pushd "%PIPELINE_ROOT%" || exit /b 1
 
-echo [1/5] canonical npz -^> FRoM-W1 623 npy
+echo [1/6] human canonical npz -^> FRoM-W1 623 npy
 "%PIPELINE_PYTHON%" adapters\canonical_to_fromw1_623.py ^
   --input-npz "%INPUT_NPZ%" ^
   --output-dir "%FROMW1_NPY_DIR%" ^
@@ -63,7 +65,7 @@ echo [1/5] canonical npz -^> FRoM-W1 623 npy
 if errorlevel 1 goto :fail
 
 echo.
-echo [2/5] FRoM-W1 623 npy -^> H1 pkl
+echo [2/6] FRoM-W1 623 npy -^> H1 pkl
 pushd "%FROMW1_RETARGET_ROOT%" || goto :fail
 "%RETARGET_PYTHON%" "%PIPELINE_ROOT%\tools\fromw1_623_to_pkl_batch.py" ^
   --input-dir "%FROMW1_NPY_DIR%" ^
@@ -76,7 +78,14 @@ if errorlevel 1 goto :fail_pop
 popd
 
 echo.
-echo [3/5] H1 pkl -^> reference GIF
+echo [3/6] H1 pkl -^> h1_reference_motion.npz
+"%PIPELINE_PYTHON%" adapters\fromw1_pkl_to_h1_reference.py ^
+  --input-dir "%FROMW1_PKL_DIR%" ^
+  --output-dir "%H1_REFERENCE_DIR%"
+if errorlevel 1 goto :fail
+
+echo.
+echo [4/6] H1 pkl -^> reference GIF
 if not exist "%PKL_GIF_DIR%" mkdir "%PKL_GIF_DIR%"
 pushd "%FROMW1_RETARGET_ROOT%" || goto :fail
 for %%P in ("%FROMW1_PKL_DIR%\*.pkl") do (
@@ -102,7 +111,7 @@ for %%P in ("%FROMW1_PKL_DIR%\*.pkl") do (
 popd
 
 echo.
-echo [4/5] H1 pkl -^> RoboJuDo rollout data + execution GIF
+echo [5/6] H1 pkl -^> RoboJuDo rollout data + execution GIF
 "%ROBOJUDO_PYTHON%" tools\robojudo_h1_pkl_batch_export.py ^
   --input-dir "%FROMW1_PKL_DIR%" ^
   --output-dir "%ROBOJUDO_OUT_DIR%" ^
@@ -113,9 +122,10 @@ echo [4/5] H1 pkl -^> RoboJuDo rollout data + execution GIF
 if errorlevel 1 goto :fail
 
 echo.
-echo [5/5] Done
+echo [6/6] Done
 echo [OUT] FRoM-W1 npy:   %FROMW1_NPY_DIR%
 echo [OUT] FRoM-W1 pkl:   %FROMW1_PKL_DIR%
+echo [OUT] H1 reference:  %H1_REFERENCE_DIR%
 echo [OUT] pkl GIFs:      %PKL_GIF_DIR%
 echo [OUT] RoboJuDo data: %ROBOJUDO_OUT_DIR%
 popd

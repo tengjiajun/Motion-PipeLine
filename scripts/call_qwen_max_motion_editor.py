@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-"""Call Qwen-Max to edit one motion from a three-layer evaluation summary.
+"""Call Qwen-Max to edit one H1 reference motion from evaluation summaries.
 
 Default behavior is intentionally single-motion: the script reads one
 ``motion_id`` from ``three_layer_summary.json`` and asks Qwen-Max for a
-canonical-motion edit plan for that motion only.
+robot-level H1 reference edit plan for that motion only.
 """
 
 from __future__ import annotations
@@ -22,18 +22,21 @@ from typing import Any
 DEFAULT_SUMMARY_JSON = Path(
     "data/metrics/three_layer_summary_fromw1_v2/three_layer_summary.json"
 )
-DEFAULT_OUTPUT_DIR = Path("data/llm/llm_edits/qwen_max_single_motion")
+DEFAULT_OUTPUT_DIR = Path("data/llm/llm_edits/qwen_max_h1_reference")
 DEFAULT_API_KEY_FILE = Path(r"F:\LLM-pepper\qw_LLM.txt")
 DEFAULT_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
 
-SYSTEM_PROMPT = """You are a humanoid robot motion reference editor.
+SYSTEM_PROMPT = """You are a humanoid robot H1 reference motion editor.
 You receive the three-layer evaluation for exactly one motion plus optional
-user and visual-model evaluations after watching the robot execution:
-source/AlphaPose layer, canonical/reference layer, execution layer, user
-evaluation, and visual qualitative evaluation.
-Your task is to propose canonical-motion edit commands, not to directly edit
-any npy/npz values.
+user and visual-model evaluations after watching the source video, the H1
+reference GIF, and the robot execution GIF.
+
+The editable target is the robot-level H1 reference motion, not the human SMPL
+or canonical source motion. H1 reference motion contains root pose and 19-DoF
+joint references before environment execution. Your task is to propose high-level
+H1 reference edit operators. Do not output raw joint angles, quaternions, arrays,
+or npy/npz values.
 
 Strict rules:
 1. Output JSON only. Do not output Markdown or any text outside JSON.
@@ -43,28 +46,34 @@ Strict rules:
    physically conservative and compatible with the automatic metrics.
 4. If the source layer needs manual review, do not propose semantic enhancement.
    Only propose source_review or conservative repair.
-5. If the canonical layer is not smooth, prefer smooth, reduce_speed,
-   reduce_acceleration, stabilize_lower_body, stabilize_root, stabilize_torso.
+5. If the H1 reference is not smooth, prefer smooth_reference, time_scale,
+   reduce_reference_speed, stabilize_lower_body, stabilize_root, stabilize_torso.
 6. If execution reports falling, excessive base tilt, abnormal base z, or large
    tracking error, reduce speed/amplitude and stabilize lower body/root/torso.
 7. strength must be a number from 0.0 to 1.0. Be conservative; normally do not
    exceed 0.6.
 
+8. For spatial user requests such as "raise the hand" or "move the hand down",
+   use move_keybody or adjust_limb_extension. Do not choose individual joint
+   names or numeric joint deltas.
+
 Output JSON schema:
 {
-  "model_role": "motion_reference_editor",
+  "model_role": "h1_reference_motion_editor",
   "motion_id": "...",
   "summary": {
     "main_failure_modes": ["..."],
     "user_feedback_interpretation": "...",
     "recommended_next_step": "..."
   },
-  "status": "source_review_needed | reference_edit_needed | execution_failed | usable",
+  "status": "source_review_needed | h1_reference_edit_needed | execution_failed | usable",
   "priority": "high | medium | low",
   "edits": [
     {
-      "type": "smooth | slow_down | reduce_speed | reduce_acceleration | reduce_amplitude | stabilize_lower_body | stabilize_root | stabilize_torso | increase_hold_duration | source_review",
-      "target": "whole_body | upper_body | lower_body | root_translation | torso | arms | legs",
+      "type": "time_scale | smooth_reference | reduce_reference_speed | reduce_reference_amplitude | move_keybody | adjust_limb_extension | stabilize_lower_body | stabilize_root | stabilize_torso | increase_hold_duration | source_review",
+      "target": "whole_body | upper_body | lower_body | root | torso | left_hand | right_hand | left_elbow | right_elbow | arms | legs",
+      "direction": "none | up | down | forward | backward | left | right | inward | outward",
+      "segment": "all | active | early | middle | late",
       "strength": 0.0,
       "reason": "..."
     }
@@ -96,6 +105,37 @@ def load_single_motion(summary_json: Path, motion_id: str) -> dict[str, Any]:
             return motion
     available = ", ".join(m.get("motion_id", "?") for m in data.get("motions", []))
     raise ValueError(f"motion_id not found: {motion_id}. Available: {available}")
+
+
+def load_h1_reference_metadata(path: Path | None) -> dict[str, Any] | None:
+    if path is None:
+        return None
+    import numpy as np
+
+    data = np.load(str(path), allow_pickle=False)
+    required = ["fps", "num_frames", "h1_joint_names", "root_pos_ref", "h1_dof_pos_ref"]
+    missing = [key for key in required if key not in data.files]
+    if missing:
+        raise ValueError(f"{path} is not a valid h1_reference_motion.npz, missing: {missing}")
+
+    fps = int(data["fps"])
+    num_frames = int(data["num_frames"])
+    root_pos = data["root_pos_ref"]
+    dof = data["h1_dof_pos_ref"]
+    return {
+        "path": str(path),
+        "format": "h1_reference_motion_v1",
+        "fps": fps,
+        "num_frames": num_frames,
+        "duration_s": float(num_frames / max(fps, 1)),
+        "joint_count": int(dof.shape[1]),
+        "joint_names": [str(x) for x in data["h1_joint_names"].tolist()],
+        "root_position_range_m": {
+            "x": [float(root_pos[:, 0].min()), float(root_pos[:, 0].max())],
+            "y": [float(root_pos[:, 1].min()), float(root_pos[:, 1].max())],
+            "z": [float(root_pos[:, 2].min()), float(root_pos[:, 2].max())],
+        },
+    }
 
 
 def collect_user_evaluation(args: argparse.Namespace) -> dict[str, Any] | None:
@@ -147,15 +187,21 @@ def build_single_motion_prompt(
     motion: dict[str, Any],
     user_evaluation: dict[str, Any] | None,
     visual_evaluation: str | None,
+    h1_reference_metadata: dict[str, Any] | None,
+    h1_reference_gif: Path | None,
 ) -> str:
     payload = {
         "instruction": (
-            "Analyze this single motion only. Propose conservative canonical "
-            "reference edits based on the automatic metrics, the user's manual "
-            "evaluation, and optional visual qualitative evaluation. Do not "
-            "edit npy/npz directly."
+            "Analyze this single motion only. Propose conservative H1 robot "
+            "reference edit operators based on the automatic metrics, the "
+            "user's manual evaluation, and optional visual qualitative "
+            "evaluation. The editable target is h1_reference_motion.npz, not "
+            "human canonical/SMPL data. Do not edit npy/npz directly and do "
+            "not output raw joint values."
         ),
         "motion": motion,
+        "h1_reference": h1_reference_metadata,
+        "h1_reference_gif": str(h1_reference_gif) if h1_reference_gif else None,
         "user_evaluation": user_evaluation,
         "visual_evaluation": visual_evaluation,
     }
@@ -239,6 +285,18 @@ def main() -> int:
         default=None,
         help="Optional custom single-motion prompt file. If set, summary JSON is not read.",
     )
+    parser.add_argument(
+        "--h1-reference-npz",
+        type=Path,
+        default=None,
+        help="Optional h1_reference_motion.npz for this motion; metadata is included in the prompt.",
+    )
+    parser.add_argument(
+        "--h1-reference-gif",
+        type=Path,
+        default=None,
+        help="Optional H1 reference GIF path; image bytes are not uploaded by this text-only script.",
+    )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--api-key-file", type=Path, default=DEFAULT_API_KEY_FILE)
     parser.add_argument("--model", default="qwen-max")
@@ -295,7 +353,14 @@ def main() -> int:
             if args.visual_report is not None
             else None
         )
-        prompt = build_single_motion_prompt(motion, user_evaluation, visual_evaluation)
+        h1_reference_metadata = load_h1_reference_metadata(args.h1_reference_npz)
+        prompt = build_single_motion_prompt(
+            motion,
+            user_evaluation,
+            visual_evaluation,
+            h1_reference_metadata,
+            args.h1_reference_gif,
+        )
 
     output_dir = args.output_dir / args.motion_id
     output_dir.mkdir(parents=True, exist_ok=True)

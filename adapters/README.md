@@ -12,6 +12,8 @@ Format conversion and cleanup scripts used by the orchestration layer.
 | `smpl_npy_to_fromw1_623.py` | FRoM-W1 | Convert AlphaPose SMPL npy to normalized FRoM-W1 623 feature npy. | Applies AlphaPose camera Y/Z flips by default; requires `--fromw1-root` when FRoM-W1 is not beside this repo. |
 | `canonical_to_fromw1_623.py` | motion_pipeline | Convert canonical MotionX-52 joints to FRoM-W1 normalized 623 feature npy. | Preferred path after `canonical_motion.npz` exists. |
 | `canonical_to_exbody_h1.py` | motion_pipeline | Convert canonical SMPL rotations to ExBody/Isaac Gym H1 retarget files. | Run in the ExBody environment with `poselib`; pass `--exbody-root`. |
+| `fromw1_pkl_to_h1_reference.py` | FRoM-W1 | Convert retargeted H1 pkl to backend-independent `h1_reference_motion.npz`. | Preferred robot-level reference format for LLM edits. |
+| `h1_reference_to_fromw1_pkl.py` | FRoM-W1/RoboJuDo | Convert edited `h1_reference_motion.npz` back to FRoM-W1 pkl. | Keeps existing GIF/RoboJuDo execution tools usable. |
 | `fromw1_pkl_to_beyondmimic_csv.py` | FRoM-W1 | Convert retargeted pkl motion to BeyondMimic CSV. | Batch defaults may need path edits later. |
 | `repair_h1_pkl_stability.py` | RoboJuDo | Blend unstable H1 pkl with stable reference. | Pure joblib/numpy. |
 | `h1_pkl_to_upper_jsonl.py` | RoboJuDo | Extract H1 upper-body joint trajectory JSONL from PHC pkl. | Requires RoboJuDo import path/env. |
