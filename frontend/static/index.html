@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>H1 Motion Review</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>H1 Motion Review</h1>
+      <p id="catalog-status" class="header-status">正在读取动作数据</p>
+    </div>
+    <button id="refresh-button" class="secondary-button" type="button">刷新数据</button>
+  </header>
+
+  <main>
+    <section class="control-band" aria-label="动作筛选">
+      <div class="field backend-field">
+        <span class="field-label">模型</span>
+        <div id="backend-control" class="segmented-control" role="group" aria-label="模型"></div>
+      </div>
+      <label class="field">
+        <span class="field-label">动作</span>
+        <select id="motion-select"></select>
+      </label>
+      <label class="field">
+        <span class="field-label">迭代版本</span>
+        <select id="version-select"></select>
+      </label>
+      <div class="selection-state">
+        <span id="availability-dot" class="status-dot"></span>
+        <span id="availability-text">等待选择</span>
+      </div>
+    </section>
+
+    <section class="media-grid" aria-label="动作对比">
+      <article class="media-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="panel-index">01</span>
+            <h2>原始视频</h2>
+          </div>
+          <span id="source-state" class="asset-state"></span>
+        </div>
+        <div id="source-media" class="media-stage"></div>
+        <p id="source-path" class="asset-path"></p>
+      </article>
+
+      <article class="media-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="panel-index">02</span>
+            <h2>H1 参考动作</h2>
+          </div>
+          <span id="reference-state" class="asset-state"></span>
+        </div>
+        <div id="reference-media" class="media-stage"></div>
+        <p id="reference-path" class="asset-path"></p>
+      </article>
+
+      <article class="media-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="panel-index">03</span>
+            <h2>实际执行</h2>
+          </div>
+          <span id="execution-state" class="asset-state"></span>
+        </div>
+        <div id="execution-media" class="media-stage"></div>
+        <p id="execution-path" class="asset-path"></p>
+      </article>
+    </section>
+
+    <section class="analysis-grid" aria-label="模型评审">
+      <article class="analysis-panel">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Qwen-VL</span>
+            <h2>动作描述与评判</h2>
+          </div>
+          <span id="review-time" class="updated-time"></span>
+        </div>
+        <div id="visual-review" class="review-content empty-copy">暂无视觉评审</div>
+        <p id="review-source" class="asset-path"></p>
+      </article>
+
+      <article class="analysis-panel">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Qwen-Max</span>
+            <h2>修改建议</h2>
+          </div>
+          <span id="plan-time" class="updated-time"></span>
+        </div>
+        <div id="edit-plan" class="plan-content empty-copy">暂无修改建议</div>
+        <p id="plan-source" class="asset-path"></p>
+      </article>
+    </section>
+
+    <section class="feedback-section" aria-label="用户建议">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Human Review</span>
+          <h2>用户建议</h2>
+        </div>
+        <span id="feedback-status" class="submit-status" role="status"></span>
+      </div>
+      <form id="feedback-form">
+        <textarea
+          id="feedback-input"
+          rows="4"
+          maxlength="4000"
+          placeholder="输入对当前动作的修改意见"
+          required
+        ></textarea>
+        <div class="feedback-actions">
+          <span id="character-count">0 / 4000</span>
+          <button id="submit-button" class="primary-button" type="submit">发送建议</button>
+        </div>
+      </form>
+      <div class="history-heading">
+        <h3>当前版本反馈记录</h3>
+        <span id="history-count">0 条</span>
+      </div>
+      <div id="feedback-history" class="feedback-history empty-copy">暂无用户反馈</div>
+    </section>
+  </main>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

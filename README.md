@@ -23,9 +23,28 @@ docs/            Data format, pipeline, sync, and experiment notes.
 manifests/       Per-motion records and batch manifests.
 scripts/         Entry points for batch conversion/evaluation.
 tools/           Small shared utilities.
+frontend/        Local motion comparison and feedback UI.
 data/            Local generated data. Large contents are gitignored.
 logs/            Runtime logs. Gitignored.
 ```
+
+## Motion Review UI
+
+On Windows, run:
+
+```text
+run_motion_review_app.bat
+```
+
+Or start it directly:
+
+```powershell
+python frontend/server.py --open
+```
+
+The UI compares the source video, H1 reference motion, and backend execution,
+then displays available Qwen reports and stores user feedback under
+`data/feedback/`.
 
 ## Motion Layers
 
