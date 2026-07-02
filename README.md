@@ -1,5 +1,7 @@
 ﻿# motion_pipeline
 
+中文交接说明见 [README_zh.md](README_zh.md).
+
 This repository is the orchestration layer for the motion workflow. AlphaPose, FRoM-W1, and ExBody stay in their own projects and environments. This project owns shared data contracts, manifests, adapters, logs, and evaluation outputs.
 
 ## Role

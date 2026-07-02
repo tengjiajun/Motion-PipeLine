@@ -17,6 +17,8 @@
 !/data/canonical/**
 /logs/*
 !/logs/.gitkeep
+/Private/*
+!/Private/.gitkeep
 
 # Python/cache
 __pycache__/
